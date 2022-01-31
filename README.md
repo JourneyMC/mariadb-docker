@@ -1,1 +1,1 @@
-# mariadb-template
+# mariadb-docker
