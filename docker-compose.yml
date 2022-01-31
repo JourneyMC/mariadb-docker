@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  db:
+    image: mariadb
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d
+    env_file:
+      - ./secrets/db.env
+
+  backup:
+    hostname: db_backup
+    build: ./backup
+    environment:
+      RESTIC_REPOSITORY: rclone:backend:bucket
+      BACKUP_CRON: "0 */12 * * *"
+      RESTIC_FORGET_ARGS: "--prune --keep-last 4 --keep-daily 5 --keep-weekly 4 --keep-monthly 6 --keep-yearly 3"
+    volumes:
+      - backup_cache:/root/.cache/restic
+      - ~/.config/rclone:/root/.config/rclone
+      - ./backup/hooks:/hooks
+      - ./secrets/.my.cnf:/root/.my.cnf
+    env_file:
+      - ~/.secrets/backup.env
